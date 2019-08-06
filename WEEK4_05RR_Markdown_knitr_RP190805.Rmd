@@ -1,0 +1,190 @@
+---
+title: "Reproducible Research Week 4:Course Project 2" 
+author: "Ravinendra Pratap"  
+date: "4 August 2019"  
+output:
+  html_document: default
+  word_document: default
+  pdf_document:
+    keep_tex: yes
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## R Markdown
+## Reproducible Research: Peer-graded Assignment: Course Project 2
+  
+## Introduction:
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.  
+  
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+  
+##  Synopsis:
+The basic goal of this assignment is to explore the NOAA Storm Database and answer two basic questions about severe weather events. First one, the types of events are most harmful to population health and secondly the types of events have the greatest economic consequences.
+  
+## Analysis:
+The Analysis on the storm event database revealed that tornadoes are the most harmful weather event to the population's health. The second most harmful event type is excessive heat. The greatest economic impact of weather events were also analysed. Flash floods and thunderstorm winds caused billions of dollars in property damages between 1950 and 2011. The largest damage to crops were caused by droughts, followed by floods and hailing.
+
+##1. Load Data
+1.Loading packages (rmarkdown, knitr and dplyr)  
+```{r}
+library(rmarkdown)
+library(knitr)
+library(dplyr)
+
+```
+2.Getting Working Directory    
+```{r}
+getwd()
+setwd ("D:/LND/COURSERA_DATA_SCIENCE/COURSERA_05_Reproducible Research/WEEK4_05RR_Markdown_knitr")
+getwd()
+```
+3.Load the data (i.e. read.csv())    
+4.Downloading zip file if it doesn't already exist in the workspace  
+5.Clear the workspace load raw activity data  
+6.Read the dataset and store in "StormData". View columns afterwards
+```{r}
+#url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+#download.file(url, "StormData.csv.bz2", mode='wb')
+#rm(list=ls())
+StormData <- read.csv(bzfile("StormData.csv.bz2")) 
+names(StormData)
+```
+##2. Data Processing
+1. Choose the columns  and store in "StormData2". In this project we only use the following   ("BGN_DATE","EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")  
+Read the dataset.
+```{r}
+StormData2 <-  StormData[ ,c( "BGN_DATE","EVTYPE","FATALITIES","INJURIES","PROPDMG",
+"PROPDMGEXP","CROPDMG","CROPDMGEXP")]
+```
+2.View Top and Bottom rows of StormData2 
+```{r}
+head (StormData2,10)
+tail (StormData2,10)
+```
+3.Check the unique values of PROPDMGEX (Property Damage Expences)
+```{r}
+unique(StormData2$PROPDMGEXP)
+```
+4. Convert values of PROPDMGEXP to the followin 
+- "H" or "h" = 2
+- "M" or "m" = 6
+- "K" = 3
+- "B" = 9
+- "+", "-" , "?" , "" = 0 In converting convert first the column into character
+```{r}
+StormData2$PROPDMGEXP <- as.character(StormData2$PROPDMGEXP)
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "B"] <- 9
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "K"] <- 3
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "M"] <- 6
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "m"] <- 6
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "h"] <- 2
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "H"] <- 2
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "+"] <- 0
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "?"] <- 0
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == "-"] <- 0
+StormData2$PROPDMGEXP[StormData2$PROPDMGEXP == ""] <- 0
+```
+5.Do the same to column CROPDMGEXP (Crop Damage Expences)
+``` {r}
+unique(StormData2$CROPDMGEXP)
+
+StormData2$CROPDMGEXP <- as.character(StormData2$CROPDMGEXP)
+StormData2$CROPDMGEXP[StormData2$CROPDMGEXP == "B"] <- 9
+StormData2$CROPDMGEXP[StormData2$CROPDMGEXP == "K"] <- 3
+StormData2$CROPDMGEXP[StormData2$CROPDMGEXP == "k"] <- 3
+StormData2$CROPDMGEXP[StormData2$CROPDMGEXP == "M"] <- 6
+StormData2$CROPDMGEXP[StormData2$CROPDMGEXP == "m"] <- 6
+StormData2$CROPDMGEXP[StormData2$CROPDMGEXP == "?"] <- 0
+StormData2$CROPDMGEXP[StormData2$CROPDMGEXP == ""] <- 0
+
+unique(StormData2$CROPDMGEXP)
+```
+6. Now we need to add a column and compute total Crop Damage and total Property Damage. Prior to computing we need to convert the column to Numeric.
+```{r}
+StormData2$PROPDMGEXP <- as.numeric(StormData2$PROPDMGEXP)
+StormData2$PROPTOTAL <- StormData2$PROPDMG * 10 ^ StormData2$PROPDMGEXP
+StormData2$CROPDMGEXP <- as.numeric(StormData2$CROPDMGEXP)
+StormData2$CROPTOTAL <- StormData2$CROPDMG * 10 ^ StormData2$CROPDMGEXP
+StormData2$ECODMG <- StormData2$PROPTOTAL + StormData2$CROPTOTAL
+```
+## 3. Data Analysis
+Now that we have clean data we will now aggregate the columns INJURIES, FATALITIES, and ECODMG by EVTYPE  
+
+By aggregating we will determine the Event Type that has the most Injuries, Fatalities, and ECODMG  
+
+In determining the effect of the Event Type in population health we need to break it down to two which are Injuries and Fatalities  
+we need to Aggregate FATALITIES and INJURIES by EVTYPE by computing its sum then we will need to get the top 10 of it.  
+(Choosing the top 10 will reduce the variable in order to see the top most Event that has the greatest efect)
+
+1. Now we need to aggregate FATALITIES 
+```{r}
+StormData2.aggfatalities <- aggregate(FATALITIES ~ EVTYPE, data = StormData2, FUN = "sum")
+StormData2.top10fatalities<- StormData2.aggfatalities[order(-StormData2.aggfatalities$FATALITIES),][1:10,]
+```
+2.  View Top 10  FATALITIES 
+```{r}
+head(StormData2.top10fatalities,10)
+```
+OR Instead of above Syntax can use below  
+StormData2.fatalities <- StormData2 %>% select(EVTYPE, FATALITIES) %>% group_by(EVTYPE) %>% summarise(total.fatalities = sum(FATALITIES)) %>%   arrange(-total.fatalities)    
+head(StormData2.fatalities,10)    
+  
+3. Now we need to aggregate INJURIES  
+```{r}
+StormData2.agginjuries <- aggregate(INJURIES ~ EVTYPE, data = StormData2, FUN = "sum")
+StormData2.top10injuries <- StormData2.agginjuries[order(-StormData2.agginjuries$INJURIES),][1:10,]
+```
+4.  View Top 10 INJURIES 
+```{r}
+head(StormData2.top10injuries,10) 
+```
+OR Instead of above Syntax can use below  
+StormData2.injuries <-  StormData2 %>% select(EVTYPE, INJURIES) %>% group_by(EVTYPE) %>% summarise(total.injuries = sum(INJURIES)) %>%    arrange(-total.injuries)  
+head( StormData2.injuries, 10)  
+tail( StormData2.injuries, 10)  
+
+5. Calculate TOTAL Health  
+```{r}
+StormData2.aggeconomic <- aggregate(ECODMG ~ EVTYPE, data = StormData2, FUN = "sum")
+StormData2.top10eco <- StormData2.aggeconomic[order(-StormData2.aggeconomic$ECODMG),][1:10,]
+head(StormData2.top10eco ,10)
+```
+##4. Results and Discussion
+For determining the result we will now graph the aggregated top 10 of each categories (Fatalities, Injuries, Economic Damage) by Event Type  
+
+For the population health we will graph both the agregated top 10 of Fatalities and injuries by Event Type  
+
+
+Graph for the Top 10 Event with The Highest Fatalities indicate that Tornados has the most number of Fatalities and that tornados affect the most compared to other Event type.  
+```{r}
+library("ggplot2")
+ggplot(data=StormData2.top10fatalities, aes(x=reorder(EVTYPE,-FATALITIES), y=FATALITIES, fill=EVTYPE)) +
+        geom_bar(stat="identity") + 
+        ggtitle("Top 10 Events with Highest Total Fatalities") + 
+        labs(x="EVENT TYPE", y="Fatalities") + 
+        theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
+```
+Graph for the Top ten Events with the Highest Injuries indicate that Tornados has the most number of Injuries caused.It can also be seen how much the big difference in numbers when compared to other event Type
+```{r}
+ggplot(data=StormData2.top10injuries, aes(x=reorder(EVTYPE,-INJURIES), y=INJURIES,fill=EVTYPE)) +
+        geom_bar(stat="identity") +
+        ggtitle("Top 10 Events with Highest Total Injuries") + 
+        labs(x="EVENT TYPE", y="INJURIES") +
+        theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
+
+```
+Plot for the Economic Impact  
+The Top ten Events with Highest Economic Cost in Billions is from Hurricane that has the most Econimic Cost. It can also be seen how much the economic cost that the hurricanse caused.
+```{r}
+ggplot(data=StormData2.top10eco, aes(x=reorder(EVTYPE,-ECODMG), y=ECODMG/1000000000,fill=EVTYPE)) +
+        geom_bar(stat="identity") +
+        ggtitle("Top 10 Events with Highest Economic Cost in Billions") + 
+        labs(x="EVENT TYPE", y="Economic Cost") +
+        theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
+```
+--- 
+author: "Ravinendra Pratap" 
+---## End of the Report
