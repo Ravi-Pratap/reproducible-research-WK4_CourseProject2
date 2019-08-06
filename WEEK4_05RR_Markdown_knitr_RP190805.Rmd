@@ -185,6 +185,4 @@ ggplot(data=StormData2.top10eco, aes(x=reorder(EVTYPE,-ECODMG), y=ECODMG/1000000
         labs(x="EVENT TYPE", y="Economic Cost") +
         theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
 ```
---- 
-author: "Ravinendra Pratap" 
----## End of the Report
+## End of the Report
