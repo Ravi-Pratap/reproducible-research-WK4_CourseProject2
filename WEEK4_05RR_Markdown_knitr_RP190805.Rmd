@@ -46,9 +46,9 @@ getwd()
 5.Clear the workspace load raw activity data  
 6.Read the dataset and store in "StormData". View columns afterwards
 ```{r}
-#url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
-#download.file(url, "StormData.csv.bz2", mode='wb')
-#rm(list=ls())
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+download.file(url, "StormData.csv.bz2", mode='wb')
+rm(list=ls())
 StormData <- read.csv(bzfile("StormData.csv.bz2")) 
 names(StormData)
 ```
@@ -186,3 +186,4 @@ ggplot(data=StormData2.top10eco, aes(x=reorder(EVTYPE,-ECODMG), y=ECODMG/1000000
         theme(axis.text.x = element_text(angle=90, vjust=0.5, hjust=1))
 ```
 ## End of the Report
+  
